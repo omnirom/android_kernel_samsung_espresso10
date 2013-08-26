@@ -325,7 +325,8 @@ static void SynaWaitATTN(void)
 
 	while (gpio_get_value(gpio_irq) && cnt++ < 300)
 		usleep_range(500, 1000);
-		do {
+
+	do {
 		readRMI(SynaF34_FlashControl, &uData, 1);
 		usleep_range(500, 1000);
 	} while ((uData != 0x80) && (cnt++ < 300));
@@ -455,6 +456,8 @@ static void SynaProgramFirmware(void)
 	SynaFlashFirmwareWrite();
 }
 
+/* commenting this func as we r not using it currently */
+#if 0
 /* eraseConfigBlock erases the config block */
 static void eraseConfigBlock(void)
 {
@@ -472,6 +475,7 @@ static void eraseConfigBlock(void)
 
 	SynaWaitATTN();
 }
+#endif
 
 bool synaptics_fw_update(struct i2c_client *ts_client, const u8 *fw_data,
 							const int gpio)

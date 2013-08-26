@@ -56,6 +56,7 @@
 #include "sec_debug.h"
 #include "sec_getlog.h"
 #include "sec_muxtbl.h"
+#include "sec_log_buf.h"
 
 /* gpio to distinguish WiFi and USA-BBY
  *
@@ -273,7 +274,7 @@ static void omap4_espresso10_init_carveout_sizes(
 	ion->tiler1d_size = (SZ_1M * 14);
 	/* WFD is not supported in espresso10 So the size is zero */
 	ion->secure_output_wfdhdcp_size = 0;
-	ion->ducati_heap_size = (SZ_1M * 105);
+	ion->ducati_heap_size = (SZ_1M * 65);
 	ion->nonsecure_tiler2d_size = (SZ_1M * 19);
 	ion->tiler2d_size = (SZ_1M * 81);
 }
@@ -307,6 +308,8 @@ static void __init espresso10_reserve(void)
 				    OMAP4_ION_HEAP_SECURE_INPUT_SIZE +
 				    OMAP4_ION_HEAP_SECURE_OUTPUT_WFDHDCP_SIZE);
 	omap_reserve();
+
+	sec_log_buf_reserve();
 }
 
 MACHINE_START(OMAP4_SAMSUNG, "Espresso10")
