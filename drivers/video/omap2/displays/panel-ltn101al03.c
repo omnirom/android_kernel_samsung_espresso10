@@ -39,6 +39,8 @@
 
 #include <plat/dmtimer.h>
 
+#define DEBUG_PRINT 0
+
 #define BRIGHTNESS_OFF			0
 #define BRIGHTNESS_DIM			20
 #define BRIGHTNESS_MIN			30
@@ -270,8 +272,10 @@ static int ltn101al03_set_brightness(struct backlight_device *bd)
 		(lcd->enabled) &&
 		(lcd->current_brightness != lcd->bl)) {
 		update_brightness(dssdev);
+#if DEBUG_PRINT
 		dev_info(&bd->dev, "[%d] brightness=%d, bl=%d\n",
 			 lcd->pdata->panel_id, bd->props.brightness, lcd->bl);
+#endif
 	}
 	mutex_unlock(&lcd->lock);
 	return ret;
@@ -311,7 +315,9 @@ static ssize_t ltn101al03_sysfs_store_lcd_power(struct device *dev,
 	if (rc < 0)
 		return rc;
 
+#if DEBUG_PRINT
 	dev_info(dev, "ltn101al03_sysfs_store_lcd_power - %d\n", lcd_enable);
+#endif
 
 	mutex_lock(&lcd->lock);
 	if (lcd_enable) {
