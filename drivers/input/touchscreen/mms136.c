@@ -1084,10 +1084,56 @@ static DEVICE_ATTR(cmd, S_IWUSR | S_IWGRP, NULL, cmd_store);
 static DEVICE_ATTR(cmd_status, S_IRUGO, cmd_status_show, NULL);
 static DEVICE_ATTR(cmd_result, S_IRUGO, cmd_result_show, NULL);
 
+static ssize_t mms136_pivot_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct ts_data *ts = dev_get_drvdata(dev);
+	int count;
+
+	count = sprintf(buf, "%d\n", ts->platform_data->pivot);
+	pr_info("tsp: pivot mode=%d\n", ts->platform_data->pivot);
+
+	return count;
+}
+
+ssize_t mms136_pivot_store(struct device *dev,
+		struct device_attribute *attr,
+		const char *buf, size_t size)
+{
+	struct ts_data *ts = dev_get_drvdata(dev);
+	int pivot;
+
+	if (kstrtoint(buf, 0, &pivot))
+		pr_err("tsp: failed storing pivot value\n");
+
+	if (pivot < 0) {
+		pivot = 0;
+	} else if (pivot > 1) {
+		pivot = 1;
+	}
+
+	if (ts->platform_data->pivot != pivot) {
+		swap(ts->platform_data->x_pixel_size,
+					ts->platform_data->y_pixel_size);
+		input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, 0,
+					ts->platform_data->x_pixel_size, 0, 0);
+		input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0,
+					ts->platform_data->y_pixel_size, 0, 0);
+
+		ts->platform_data->pivot = pivot;
+		pr_info("tsp: pivot mode=%d\n", pivot);
+	}
+
+	return size;
+}
+
+static DEVICE_ATTR(pivot, S_IRUGO | S_IWUSR, mms136_pivot_show, mms136_pivot_store);
+
 static struct attribute *touchscreen_attributes[] = {
 	&dev_attr_cmd.attr,
 	&dev_attr_cmd_status.attr,
 	&dev_attr_cmd_result.attr,
+	&dev_attr_pivot.attr,
 	NULL,
 };
 
