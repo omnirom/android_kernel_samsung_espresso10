@@ -303,7 +303,7 @@ static struct omap_opp_def __initdata omap443x_opp_def_list[] = {
 	OPP_INITIALIZER("gpu", "dpll_per_m7x2_ck", "core", true,
 			307200000, OMAP4430_VDD_CORE_OPP100_UV),
 #ifdef CONFIG_OMAP4430_GPU_OVERCLOCK
-	OPP_INITIALIZER("gpu", "dpll_per_m7x2_ck", "core", true,
+	OPP_INITIALIZER("gpu", "dpll_per_m7x2_ck", "core", false,
 			384000000, OMAP4430_VDD_CORE_OPP100_UV),
 	OPP_INITIALIZER("gpu", "dpll_per_m7x2_ck", "core", false,
 			512000000, OMAP4430_VDD_CORE_OPP100_OV_UV),
@@ -1042,14 +1042,18 @@ int __init omap4_opp_init(void)
 
 	if (r)
 		goto out;
+
 #ifdef CONFIG_OMAP4430_CPU_OVERCLOCK
-	else {
-		omap4_opp_enable("mpu", 1200000000);
-		omap4_opp_enable("mpu", 1350000000);
-		omap4_opp_enable("mpu", 1420000000);
-		omap4_opp_enable("mpu", 1480000000);
-		omap4_opp_enable("mpu", 1520000000);
-	}
+	omap4_opp_enable("mpu", 1200000000);
+	omap4_opp_enable("mpu", 1350000000);
+	omap4_opp_enable("mpu", 1420000000);
+	omap4_opp_enable("mpu", 1480000000);
+	omap4_opp_enable("mpu", 1520000000);
+#endif
+
+#ifdef CONFIG_OMAP4430_GPU_OVERCLOCK
+	omap4_opp_enable("gpu", 384000000);
+	omap4_opp_enable("gpu", 512000000);
 #endif
 
 	/* Enable Nitro and NitroSB IVA OPPs */
