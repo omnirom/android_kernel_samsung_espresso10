@@ -67,6 +67,8 @@ struct cpu_dbs_info_s {
 	cputime64_t prev_cpu_nice;
 	struct cpufreq_policy *cur_policy;
 	struct delayed_work work;
+	struct work_struct hotplug_up_work;
+	struct work_struct hotplug_down_work;
 	struct cpufreq_frequency_table *freq_table;
 	int cpu;
 	/*
@@ -513,15 +515,10 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	/* check if auxiliary CPU is needed based on avg_load */
 	if (avg_load > dbs_tuners_ins.up_threshold) {
 		/* should we enable auxillary CPUs? */
-		if (num_online_cpus() < 2 && hotplug_in_avg_load >
+		if (num_online_cpus() < num_possible_cpus() && hotplug_in_avg_load >
 				dbs_tuners_ins.up_threshold) {
-			/* hotplug with cpufreq is nasty
-			 * a call to cpufreq_governor_dbs may cause a lockup.
-			 * wq is not running here so its safe.
-			 */
-			mutex_unlock(&this_dbs_info->timer_mutex);
-			cpu_up(1);
-			mutex_lock(&this_dbs_info->timer_mutex);
+			queue_work_on(this_dbs_info->cpu, khotplug_wq,
+				&this_dbs_info->hotplug_up_work); 
 			goto out;
 		}
 	}
@@ -543,9 +540,8 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 			/* should we disable auxillary CPUs? */
 			if (num_online_cpus() > 1 && hotplug_out_avg_load <
 					dbs_tuners_ins.down_threshold) {
-				mutex_unlock(&this_dbs_info->timer_mutex);
-				cpu_down(1);
-				mutex_lock(&this_dbs_info->timer_mutex);
+				queue_work_on(this_dbs_info->cpu, khotplug_wq,
+					&this_dbs_info->hotplug_down_work);
 			}
 			goto out;
 		}
@@ -573,6 +569,28 @@ out:
 	return;
 }
 
+static void cpu_up_work(struct work_struct *work)
+{
+	int cpu;
+	
+	for_each_cpu_not(cpu, cpu_online_mask) {
+		if (cpu == 0)
+			continue;
+		cpu_up(cpu);
+	}
+}
+
+static void cpu_down_work(struct work_struct *work)
+{
+	int cpu;
+	
+	for_each_online_cpu(cpu) {
+		if (cpu == 0)
+			continue;
+		cpu_down(cpu);
+	}
+}
+
 static void do_dbs_timer(struct work_struct *work)
 {
 	struct cpu_dbs_info_s *dbs_info =
@@ -595,6 +613,8 @@ static inline void dbs_timer_init(struct cpu_dbs_info_s *dbs_info)
 	delay -= jiffies % delay;
 
 	INIT_DELAYED_WORK_DEFERRABLE(&dbs_info->work, do_dbs_timer);
+	INIT_WORK(&dbs_info->hotplug_up_work, cpu_up_work);
+	INIT_WORK(&dbs_info->hotplug_down_work, cpu_down_work);
 	queue_delayed_work_on(dbs_info->cpu, khotplug_wq, &dbs_info->work,
 		delay);
 }
