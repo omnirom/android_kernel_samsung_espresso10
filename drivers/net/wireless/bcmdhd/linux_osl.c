@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: linux_osl.c 398870 2013-04-26 09:42:18Z $
+ * $Id: linux_osl.c 425656 2013-09-25 03:24:00Z $
  */
 
 #define LINUX_PORT
@@ -600,6 +600,12 @@ osl_pktfree(osl_t *osh, void *p, bool send)
 	struct sk_buff *skb, *nskb;
 	unsigned long flags;
 
+	if (osh == NULL)
+	{
+		printk("%s: osh == NULL \n", __FUNCTION__);
+		return;
+	}
+
 	skb = (struct sk_buff*) p;
 
 	if (send && osh->pub.tx_fn)
@@ -1035,6 +1041,17 @@ osl_delay(uint usec)
 		udelay(d);
 		usec -= d;
 	}
+}
+
+void
+osl_sleep(uint ms)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+	if (ms < 20)
+		usleep_range(ms*1000, ms*1000 + 1000);
+	else
+#endif
+	msleep(ms);
 }
 
 

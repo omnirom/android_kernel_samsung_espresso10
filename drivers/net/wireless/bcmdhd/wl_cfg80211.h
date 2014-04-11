@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: wl_cfg80211.h 395759 2013-04-09 16:18:32Z $
+ * $Id: wl_cfg80211.h 426566 2013-09-30 05:51:44Z $
  */
 
 #ifndef _wl_cfg80211_h_
@@ -181,6 +181,8 @@ do {									\
 #define WL_SCB_TIMEOUT	20
 #endif
 
+#define WL_PM_ENABLE_TIMEOUT 10000
+
 /* driver status */
 enum wl_status {
 	WL_STATUS_READY = 0,
@@ -263,6 +265,14 @@ enum wl_management_type {
 	WL_PROBE_RESP = 0x2,
 	WL_ASSOC_RESP = 0x4
 };
+
+enum wl_handler_del_type {
+	WL_HANDLER_NOTUSE,
+	WL_HANDLER_DEL,
+	WL_HANDLER_MAINTAIN,
+	WL_HANDLER_PEND
+};
+
 /* beacon / probe_response */
 struct beacon_proberesp {
 	__le64 timestamp;
@@ -599,6 +609,8 @@ struct wl_priv {
 #ifdef WL_HOST_BAND_MGMT
 	u8 curr_band;
 #endif /* WL_HOST_BAND_MGMT */
+	bool pm_enable_work_on;
+	struct delayed_work pm_enable_work;
 };
 
 
@@ -865,4 +877,10 @@ extern s32 wl_add_remove_eventmsg(struct net_device *ndev, u16 event, bool add);
 extern void wl_stop_wait_next_action_frame(struct wl_priv *wl, struct net_device *ndev);
 extern s32 wl_cfg80211_set_band(struct net_device *ndev, int band);
 extern int wl_cfg80211_update_power_mode(struct net_device *dev);
+
+#ifdef WL11U
+/* Action frame specific functions */
+extern u8 wl_get_action_category(void *frame, u32 frame_len);
+extern int wl_get_public_action(void *frame, u32 frame_len, u8 *ret_action);
+#endif /* WL11U */
 #endif				/* _wl_cfg80211_h_ */

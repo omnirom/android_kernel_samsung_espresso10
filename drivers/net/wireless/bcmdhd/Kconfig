@@ -22,12 +22,14 @@ config BCM43241
 config BCMDHD_FW_PATH
 	depends on WLAN
 	string "Firmware path"
+	default "/system/etc/firmware/fw_bcmdhd.bin"
 	---help---
 	  Path to the firmware file.
 
 config BCMDHD_NVRAM_PATH
 	depends on WLAN
 	string "NVRAM path"
+	default "/system/etc/wifi/bcmdhd.cal"
 	---help---
 	  Path to the calibration file.
 
@@ -72,3 +74,9 @@ config WLAN_REGION_CODE
 		- 202 : KOR KTT
 		- 203 : KOR LGT
 		- 300 : CHN OPEN
+
+config BRCM_CCX
+	bool "Enable CCX"
+	default n
+	---help---
+		Enable Cisco Compatible eXtenstion

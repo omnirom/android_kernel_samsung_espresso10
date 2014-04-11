@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: bcmsdh_linux.c 384891 2013-02-13 13:39:09Z $
+ * $Id: bcmsdh_linux.c 404820 2013-05-29 14:15:54Z $
  */
 
 /**
@@ -48,11 +48,6 @@ extern void dhdsdio_isr(void * args);
 #include <dngl_stats.h>
 #include <dhd.h>
 #endif /* defined(OOB_INTR_ONLY) || defined(BCMSPI_ANDROID) */
-
-#if defined(CUSTOMER_HW4) && defined(CONFIG_PM_SLEEP) && defined(PLATFORM_SLP)
-/* SLP_wakelock_alternative_code */
-struct device *pm_dev;
-#endif /* CUSTOMER_HW4 && CONFIG_PM_SLEEP && PLATFORM_SLP */
 
 /**
  * SDIO Host Controller info
@@ -167,9 +162,6 @@ int bcmsdh_probe(struct device *dev)
 	int irq = 0;
 	uint32 vendevid;
 	unsigned long irq_flags = 0;
-#if defined(CUSTOMER_HW4) && defined(CONFIG_PM_SLEEP) && defined(PLATFORM_SLP)
-	int ret = 0;
-#endif /* CUSTOMER_HW4 && CONFIG_PM_SLEEP && PLATFORM_SLP */
 
 #if !defined(BCMLXSDMMC) && defined(BCMPLATFORM_BUS) && !defined(BCMSPI_ANDROID)
 	pdev = to_platform_device(dev);
@@ -240,13 +232,6 @@ int bcmsdh_probe(struct device *dev)
 	sdhc->next = sdhcinfo;
 	sdhcinfo = sdhc;
 
-#if defined(CUSTOMER_HW4) && defined(CONFIG_PM_SLEEP) && defined(PLATFORM_SLP)
-	/* SLP_wakelock_alternative_code */
-	pm_dev = sdhc->dev;
-	ret = device_init_wakeup(pm_dev, 1);
-	printf("%s : device_init_wakeup(pm_dev) enable, ret = %d\n", __func__, ret);
-#endif /* CUSTOMER_HW4 && CONFIG_PM_SLEEP && PLATFORM_SLP */
-
 	/* Read the vendor/device ID from the CIS */
 	vendevid = bcmsdh_query_device(sdh);
 	/* try to attach to the target device */
@@ -303,11 +288,6 @@ int bcmsdh_remove(struct device *dev)
 		return 0;
 	}
 
-#if defined(CUSTOMER_HW4) && defined(CONFIG_PM_SLEEP) && defined(PLATFORM_SLP)
-	/* SLP_wakelock_alternative_code */
-	device_init_wakeup(pm_dev, 0);
-	printf("%s : device_init_wakeup(pm_dev) disable\n", __func__);
-#endif /* CUSTOMER_HW4 && CONFIG_PM_SLEEP && PLATFORM_SLP */
 	drvinfo.detach(sdhc->ch);
 	bcmsdh_detach(sdhc->osh, sdhc->sdh);
 	/* detach ch & sdhc if dev is valid */
