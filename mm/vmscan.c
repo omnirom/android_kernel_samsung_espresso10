@@ -726,19 +726,9 @@ static enum page_references page_check_references(struct page *page,
 		 */
 		SetPageReferenced(page);
 
-#ifndef CONFIG_CMA
 		if (referenced_page)
 			return PAGEREF_ACTIVATE;
-#else
-		if (referenced_page || referenced_ptes > 1)
-			return PAGEREF_ACTIVATE;
 
-		/*
-		 * Activate file-backed executable pages after first usage.
-		*/
-		if (vm_flags & VM_EXEC)
-			return PAGEREF_ACTIVATE;
-#endif
 		return PAGEREF_KEEP;
 	}
 
@@ -1054,12 +1044,8 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode, int file)
 	 * unevictable; only give shrink_page_list evictable pages.
 	 */
 	if (PageUnevictable(page))
-#ifndef CONFIG_CMA
 		return ret;
-#else
-		printk(KERN_ERR "%s[%d] Unevictable page %p\n",
-					__func__, __LINE__, page);
-#endif
+
 	ret = -EBUSY;
 
 	/*
